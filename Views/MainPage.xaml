@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="JobTracker.Views.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:JobTracker.Views"
+    xmlns:converters="using:JobTracker.Converters"
+    xmlns:models="using:JobTracker.Models"
+    Background="Transparent"
+    NavigationCacheMode="Enabled"
+    SizeChanged="Page_SizeChanged">
+
+    <Page.Resources>
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter" />
+        <converters:WorkModelToColorConverter x:Key="WorkModelToColorConverter" />
+        <converters:DateToStringConverter x:Key="DateToStringConverter" />
+        <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter" />
+    </Page.Resources>
+
+    <Page.Transitions>
+        <TransitionCollection>
+            <EntranceThemeTransition />
+        </TransitionCollection>
+    </Page.Transitions>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                  HorizontalScrollBarVisibility="Disabled">
+        <Grid x:Name="RootGrid" Padding="24,12,24,24" MinWidth="320">
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="WindowSizeStates">
+                    <!-- Compact: < 640px -->
+                    <VisualState x:Name="CompactState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="RootGrid.Padding" Value="12,8,12,16" />
+                            <Setter Target="HeaderTitle.FontSize" Value="22" />
+                            <Setter Target="StatsGrid.Visibility" Value="Collapsed" />
+                            <Setter Target="CompactStatsGrid.Visibility" Value="Visible" />
+                            <Setter Target="FilterGrid.Visibility" Value="Collapsed" />
+                            <Setter Target="CompactFilterPanel.Visibility" Value="Visible" />
+                            <Setter Target="AddJobButtonText.Visibility" Value="Collapsed" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <!-- Medium: 640px - 1024px -->
+                    <VisualState x:Name="MediumState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="640" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="RootGrid.Padding" Value="20,12,20,24" />
+                            <Setter Target="HeaderTitle.FontSize" Value="26" />
+                            <Setter Target="StatsGrid.Visibility" Value="Visible" />
+                            <Setter Target="CompactStatsGrid.Visibility" Value="Collapsed" />
+                            <Setter Target="FilterGrid.Visibility" Value="Visible" />
+                            <Setter Target="CompactFilterPanel.Visibility" Value="Collapsed" />
+                            <Setter Target="AddJobButtonText.Visibility" Value="Visible" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <!-- Wide: > 1024px -->
+                    <VisualState x:Name="WideState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="1024" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="RootGrid.Padding" Value="32,16,32,32" />
+                            <Setter Target="HeaderTitle.FontSize" Value="28" />
+                            <Setter Target="StatsGrid.Visibility" Value="Visible" />
+                            <Setter Target="CompactStatsGrid.Visibility" Value="Collapsed" />
+                            <Setter Target="FilterGrid.Visibility" Value="Visible" />
+                            <Setter Target="CompactFilterPanel.Visibility" Value="Collapsed" />
+                            <Setter Target="AddJobButtonText.Visibility" Value="Visible" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock x:Name="HeaderTitle"
+                               Text="Job Applications" 
+                               FontSize="28"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}" />
+                    <TextBlock x:Name="SubtitleText"
+                               Text="Track and manage your job search" 
+                               Style="{StaticResource SubtitleTextStyle}"
+                               Margin="0,4,0,0"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button x:Name="SyncButton"
+                            Style="{StaticResource DefaultButtonStyle}"
+                            Click="SyncButton_Click"
+                            Padding="12,10"
+                            ToolTipService.ToolTip="Sync from Gmail">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE72C;" FontSize="16" />
+                            <TextBlock Text="Sync" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="AddJobButton"
+                            Style="{StaticResource AccentButtonStyle}"
+                            Click="AddJobButton_Click"
+                            MinWidth="44"
+                            Padding="12,10"
+                            ToolTipService.ToolTip="Add Manual Job">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE710;" FontSize="16" />
+                            <TextBlock x:Name="AddJobButtonText" Text="Add Job" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Stats Cards (Wide/Medium) -->
+            <Grid x:Name="StatsGrid" Grid.Row="1" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource StatsCardStyle}" Margin="0,0,6,0">
+                    <StackPanel>
+                        <TextBlock Text="Total" Style="{StaticResource CaptionTextStyle}" />
+                        <TextBlock x:Name="TotalCount" Text="0" Style="{StaticResource StatsNumberStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource StatsCardStyle}" Margin="3,0">
+                    <Border.Background>
+                        <SolidColorBrush Color="#E6B5E8C3" />
+                    </Border.Background>
+                    <StackPanel>
+                        <TextBlock Text="Applied" Style="{StaticResource CaptionTextStyle}" />
+                        <TextBlock x:Name="AppliedCount" Text="0" Style="{StaticResource StatsNumberStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource StatsCardStyle}" Margin="3,0">
+                    <Border.Background>
+                        <SolidColorBrush Color="#E6FFF3B8" />
+                    </Border.Background>
+                    <StackPanel>
+                        <TextBlock Text="Interview" Style="{StaticResource CaptionTextStyle}" />
+                        <TextBlock x:Name="InterviewCount" Text="0" Style="{StaticResource StatsNumberStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="3" Style="{StaticResource StatsCardStyle}" Margin="3,0">
+                    <Border.Background>
+                        <SolidColorBrush Color="#E6C8E6C9" />
+                    </Border.Background>
+                    <StackPanel>
+                        <TextBlock Text="Offers" Style="{StaticResource CaptionTextStyle}" />
+                        <TextBlock x:Name="OfferCount" Text="0" Style="{StaticResource StatsNumberStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4" Style="{StaticResource StatsCardStyle}" Margin="6,0,0,0">
+                    <Border.Background>
+                        <SolidColorBrush Color="#E6F5B7B1" />
+                    </Border.Background>
+                    <StackPanel>
+                        <TextBlock Text="Rejected" Style="{StaticResource CaptionTextStyle}" />
+                        <TextBlock x:Name="RejectedCount" Text="0" Style="{StaticResource StatsNumberStyle}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Compact Stats (horizontal scroll) -->
+            <ScrollViewer x:Name="CompactStatsGrid" 
+                          Grid.Row="2" 
+                          Margin="0,0,0,16"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled"
+                          Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Style="{StaticResource StatsCardStyle}" MinWidth="80" Padding="12">
+                        <StackPanel>
+                            <TextBlock Text="Total" Style="{StaticResource CaptionTextStyle}" />
+                            <TextBlock x:Name="TotalCountCompact" Text="0" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource StatsCardStyle}" MinWidth="80" Padding="12">
+                        <Border.Background>
+                            <SolidColorBrush Color="#E6B5E8C3" />
+                        </Border.Background>
+                        <StackPanel>
+                            <TextBlock Text="Applied" Style="{StaticResource CaptionTextStyle}" />
+                            <TextBlock x:Name="AppliedCountCompact" Text="0" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource StatsCardStyle}" MinWidth="80" Padding="12">
+                        <Border.Background>
+                            <SolidColorBrush Color="#E6FFF3B8" />
+                        </Border.Background>
+                        <StackPanel>
+                            <TextBlock Text="Interview" Style="{StaticResource CaptionTextStyle}" />
+                            <TextBlock x:Name="InterviewCountCompact" Text="0" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource StatsCardStyle}" MinWidth="80" Padding="12">
+                        <Border.Background>
+                            <SolidColorBrush Color="#E6C8E6C9" />
+                        </Border.Background>
+                        <StackPanel>
+                            <TextBlock Text="Offers" Style="{StaticResource CaptionTextStyle}" />
+                            <TextBlock x:Name="OfferCountCompact" Text="0" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource StatsCardStyle}" MinWidth="80" Padding="12">
+                        <Border.Background>
+                            <SolidColorBrush Color="#E6F5B7B1" />
+                        </Border.Background>
+                        <StackPanel>
+                            <TextBlock Text="Rejected" Style="{StaticResource CaptionTextStyle}" />
+                            <TextBlock x:Name="RejectedCountCompact" Text="0" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Filter Bar (Wide/Medium) -->
+            <Grid x:Name="FilterGrid" Grid.Row="3" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="400" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="SearchBox"
+                         Grid.Column="0"
+                         PlaceholderText="Search by company, position, or location..."
+                         Style="{StaticResource SearchBoxStyle}"
+                         TextChanged="SearchBox_TextChanged" />
+
+                <ComboBox x:Name="StatusFilter"
+                          Grid.Column="1"
+                          PlaceholderText="All Status"
+                          Width="130"
+                          Margin="12,0,0,0"
+                          CornerRadius="8"
+                          SelectionChanged="StatusFilter_SelectionChanged">
+                    <ComboBoxItem Content="All Status" Tag="" />
+                    <ComboBoxItem Content="Saved" Tag="Saved" />
+                    <ComboBoxItem Content="Applied" Tag="Applied" />
+                    <ComboBoxItem Content="Interview" Tag="Interview" />
+                    <ComboBoxItem Content="Offer" Tag="Offer" />
+                    <ComboBoxItem Content="Rejected" Tag="Rejected" />
+                </ComboBox>
+
+                <ComboBox x:Name="WorkModelFilter"
+                          Grid.Column="2"
+                          PlaceholderText="All Types"
+                          Width="120"
+                          Margin="8,0,0,0"
+                          CornerRadius="8"
+                          SelectionChanged="WorkModelFilter_SelectionChanged">
+                    <ComboBoxItem Content="All Types" Tag="" />
+                    <ComboBoxItem Content="Remote" Tag="Remote" />
+                    <ComboBoxItem Content="Hybrid" Tag="Hybrid" />
+                    <ComboBoxItem Content="Onsite" Tag="Onsite" />
+                </ComboBox>
+            </Grid>
+
+            <!-- Compact Filter Panel -->
+            <StackPanel x:Name="CompactFilterPanel" Grid.Row="4" Spacing="8" Margin="0,0,0,12" Visibility="Collapsed">
+                <TextBox x:Name="SearchBoxCompact"
+                         PlaceholderText="Search..."
+                         Style="{StaticResource SearchBoxStyle}"
+                         TextChanged="SearchBoxCompact_TextChanged" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ComboBox x:Name="StatusFilterCompact"
+                              Grid.Column="0"
+                              HorizontalAlignment="Stretch"
+                              Margin="0,0,4,0"
+                              CornerRadius="8"
+                              SelectionChanged="StatusFilterCompact_SelectionChanged">
+                        <ComboBoxItem Content="All Status" Tag="" IsSelected="True" />
+                        <ComboBoxItem Content="Saved" Tag="Saved" />
+                        <ComboBoxItem Content="Applied" Tag="Applied" />
+                        <ComboBoxItem Content="Interview" Tag="Interview" />
+                        <ComboBoxItem Content="Offer" Tag="Offer" />
+                        <ComboBoxItem Content="Rejected" Tag="Rejected" />
+                    </ComboBox>
+                    <ComboBox x:Name="WorkModelFilterCompact"
+                              Grid.Column="1"
+                              HorizontalAlignment="Stretch"
+                              Margin="4,0,0,0"
+                              CornerRadius="8"
+                              SelectionChanged="WorkModelFilterCompact_SelectionChanged">
+                        <ComboBoxItem Content="All Types" Tag="" IsSelected="True" />
+                        <ComboBoxItem Content="Remote" Tag="Remote" />
+                        <ComboBoxItem Content="Hybrid" Tag="Hybrid" />
+                        <ComboBoxItem Content="Onsite" Tag="Onsite" />
+                    </ComboBox>
+                </Grid>
+            </StackPanel>
+
+            <!-- Job List Actions (Select All, Delete Selected) -->
+            <Grid x:Name="JobListActionsGrid" Grid.Row="5" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <CheckBox x:Name="SelectAllCheckBox"
+                          Grid.Column="0"
+                          Content="Select All"
+                          Click="SelectAllCheckBox_Click"
+                          VerticalAlignment="Center" />
+
+                <TextBlock x:Name="SelectionCountText"
+                           Grid.Column="1"
+                           Text=""
+                           VerticalAlignment="Center"
+                           Margin="12,0,0,0"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="13" />
+
+                <Button x:Name="DeleteSelectedButton"
+                        Grid.Column="3"
+                        Style="{StaticResource DefaultButtonStyle}"
+                        Click="DeleteSelectedButton_Click"
+                        Padding="12,8"
+                        Visibility="Collapsed"
+                        ToolTipService.ToolTip="Delete selected jobs">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="{StaticResource PastelRedBrush}" />
+                        <TextBlock Text="Delete Selected" Foreground="{StaticResource PastelRedBrush}" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- Job List -->
+            <Grid Grid.Row="6" MinHeight="200">
+                <!-- Empty State -->
+                <StackPanel x:Name="EmptyState"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Visibility="Collapsed"
+                            Padding="20">
+                    <FontIcon Glyph="&#xE821;" 
+                              FontSize="56" 
+                              Foreground="{StaticResource TextMutedBrush}"
+                              Margin="0,0,0,16" />
+                    <TextBlock Text="No job applications yet"
+                               Style="{StaticResource SubtitleTextStyle}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center" />
+                    <TextBlock Text="Click the + button to start tracking"
+                               Style="{StaticResource CaptionTextStyle}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               Margin="0,8,0,0" />
+                </StackPanel>
+
+                <!-- Job List -->
+                <ListView x:Name="JobListView"
+                          ItemsSource="{x:Bind Jobs, Mode=OneWay}"
+                          SelectionMode="Multiple"
+                          IsItemClickEnabled="True"
+                          ItemClick="JobListView_ItemClick"
+                          SelectionChanged="JobListView_SelectionChanged">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0,0,0,8" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemContainerTransitions>
+                        <TransitionCollection>
+                            <AddDeleteThemeTransition />
+                            <ReorderThemeTransition />
+                        </TransitionCollection>
+                    </ListView.ItemContainerTransitions>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:Job">
+                            <Border Style="{StaticResource JobCardStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Company and Position -->
+                                    <StackPanel Grid.Column="0" Grid.Row="0">
+                                        <TextBlock Text="{x:Bind Company}" 
+                                                   FontSize="15" 
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind Position}" 
+                                                   FontSize="13"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Margin="0,2,0,0" />
+                                    </StackPanel>
+
+                                    <!-- Action Buttons -->
+                                    <StackPanel Grid.Column="1" Grid.Row="0"
+                                                Orientation="Horizontal"
+                                                Spacing="2"
+                                                VerticalAlignment="Top">
+                                        <Button Tag="{x:Bind Id}"
+                                                Click="EditJob_Click"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="8"
+                                                MinWidth="36"
+                                                MinHeight="36"
+                                                CornerRadius="6"
+                                                ToolTipService.ToolTip="Edit">
+                                            <FontIcon Glyph="&#xE70F;" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </Button>
+                                        <Button Tag="{x:Bind Id}"
+                                                Click="DeleteJob_Click"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="8"
+                                                MinWidth="36"
+                                                MinHeight="36"
+                                                CornerRadius="6"
+                                                ToolTipService.ToolTip="Delete">
+                                            <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="{StaticResource PastelRedBrush}" />
+                                        </Button>
+                                    </StackPanel>
+
+                                    <!-- Tags Row: Status + Work Model -->
+                                    <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" 
+                                                Orientation="Horizontal"
+                                                Spacing="8"
+                                                Margin="0,10,0,0">
+                                        <!-- Status Badge -->
+                                        <Border Style="{StaticResource StatusBadgeStyle}"
+                                                Background="{x:Bind Status, Converter={StaticResource StatusToColorConverter}}">
+                                            <TextBlock Text="{x:Bind Status, Converter={StaticResource EnumToStringConverter}}"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </Border>
+
+                                        <!-- Work Model Badge -->
+                                        <Border CornerRadius="6" 
+                                                Padding="8,4"
+                                                Background="{x:Bind WorkModel, Converter={StaticResource WorkModelToColorConverter}}">
+                                            <TextBlock Text="{x:Bind WorkModel, Converter={StaticResource EnumToStringConverter}}"
+                                                       FontSize="11"
+                                                       FontWeight="Medium"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Location, Date, Salary Row -->
+                                    <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" 
+                                                Orientation="Horizontal"
+                                                Spacing="12"
+                                                Margin="0,8,0,0">
+                                        <!-- Location -->
+                                        <StackPanel Orientation="Horizontal" Spacing="4"
+                                                    Visibility="{x:Bind Location, Converter={StaticResource StringNotEmptyToVisibilityConverter}}">
+                                            <FontIcon Glyph="&#xE81D;" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                                            <TextBlock Text="{x:Bind Location}" 
+                                                       FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       MaxWidth="120"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <!-- Date Applied -->
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <FontIcon Glyph="&#xE787;" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                                            <TextBlock Text="{x:Bind DateApplied, Converter={StaticResource DateToStringConverter}}" 
+                                                       FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}" />
+                                        </StackPanel>
+
+                                        <!-- Salary if present -->
+                                        <StackPanel Orientation="Horizontal" 
+                                                    Spacing="4"
+                                                    Visibility="{x:Bind Salary, Converter={StaticResource StringNotEmptyToVisibilityConverter}}">
+                                            <FontIcon Glyph="&#xE8C7;" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                                            <TextBlock Text="{x:Bind Salary}" 
+                                                       FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       MaxWidth="100"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Page>
