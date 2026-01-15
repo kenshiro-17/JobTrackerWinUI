@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "JobTracker (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "JobTracker (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
