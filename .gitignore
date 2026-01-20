@@ -1,0 +1,52 @@
+# Build outputs
+bin/
+obj/
+publish/
+Output/
+Distribution/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+# Rider
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+
+# Credentials and tokens
+token.json
+credentials.json
+*.pem
+*.key
+gcp-oauth.keys.json
+gmail-mcp/gcp-oauth.keys.json
+gmail-mcp/gmail_mcp_config.json
+gmail-mcp/start-mcp.ps1
+gmail-mcp/test_request.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Agent configs
+.agent/
+
+# Installer output
+Installer/*.exe
+
+# Node modules
+node_modules/
+gmail-mcp/node_modules/
